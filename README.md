@@ -70,4 +70,4 @@ function mfa --wraps=2fa\ -clip\ \(cut\ -f\ 1\ -d\ \'\ \'\ \<\ \~/.2fa\ \|\ gum\
 end
 ```
 
-Call it by typing `mfa` in the terminal, and a menu appears, selecting one of the options will copy the code into the clipboard.
+Call it by typing `mfa` in the terminal and a menu appears. Selecting one of the options will copy the code into the clipboard.
