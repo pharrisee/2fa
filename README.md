@@ -2,7 +2,7 @@
 
 Usage:
 
-    go get -u rsc.io/2fa
+    go install github.com/pharrisee/2fa@latest
 
     2fa -add [-7] [-8] [-hotp] name
     2fa -list
@@ -57,3 +57,17 @@ Or to type less:
     $ 2fa
     268346	github
     $
+
+## Fish integration
+
+Install (Gum)[github.com/charmbracelet/gum] for menu creation.
+
+Add this function to `~/.config/fish/functions/mfa.fish`:
+
+```
+function mfa --wraps=2fa\ -clip\ \(cut\ -f\ 1\ -d\ \'\ \'\ \<\ \~/.2fa\ \|\ gum\ choose\) --description alias\ mfa=2fa\ -clip\ \(cut\ -f\ 1\ -d\ \'\ \'\ \<\ \~/.2fa\ \|\ gum\ choose\)
+  2fa -clip (cut -f 1 -d ' ' < ~/.2fa | gum choose) $argv;
+end
+```
+
+Call it by typing `mfa` in the terminal, and a menu appears, selecting one of the options will copy the code into the clipboard.
