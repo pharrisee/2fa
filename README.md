@@ -60,7 +60,7 @@ Or to type less:
 
 ## Fish integration
 
-Install [Gum](github.com/charmbracelet/gum) for menu creation.
+Install [Gum](https://github.com/charmbracelet/gum) for menu creation.
 
 Add this function to `~/.config/fish/functions/mfa.fish`:
 
