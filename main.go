@@ -35,7 +35,7 @@
 //
 // The keychain is stored unencrypted in the text file $HOME/.2fa.
 //
-// Example
+// # Example
 //
 // During GitHub 2FA setup, at the “Scan this barcode with your app” step,
 // click the “enter this text code instead” link. A window pops up showing
@@ -58,7 +58,6 @@
 //	$ 2fa
 //	268346	github
 //	$
-//
 package main
 
 import (
