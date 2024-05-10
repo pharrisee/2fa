@@ -1,4 +1,4 @@
-module rsc.io/2fa
+module github.com/pharrisee/2fa
 
 go 1.21
 
