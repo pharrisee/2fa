@@ -1,73 +1,301 @@
-2fa is a two-factor authentication agent.
+# 2fa — Two-Factor Auth Agent
 
-Usage:
+<a href="#"><img src="https://img.shields.io/badge/go-1.26-blue"></a>
+<a href="#"><img src="https://img.shields.io/badge/license-BSD--3--Clause-green"></a>
 
-    go install github.com/pharrisee/2fa@latest
+A zero-frills TOTP/HOTP authenticator that lives in your terminal. No phone app,
+no browser extension — just a single Go binary and a plaintext (or optionally
+encrypted) keychain file.
 
-    2fa -add [-7] [-8] [-hotp] name
-    2fa -list
-    2fa name
+Forked from [the Go authors' 2fa](https://github.com/rsc/tmp2fa).
 
-`2fa -add name` adds a new key to the 2fa keychain with the given name. It
-prints a prompt to standard error and reads a two-factor key from standard
-input. Two-factor keys are short case-insensitive strings of letters A-Z and
-digits 2-7.
+---
 
-By default the new key generates time-based (TOTP) authentication codes; the
-`-hotp` flag makes the new key generate counter-based (HOTP) codes instead.
+## Migrating to a new machine
 
-By default the new key generates 6-digit codes; the `-7` and `-8` flags select
-7- and 8-digit codes instead.
+```bash
+# On the old machine:
+2fa export > 2fa-keys.txt
 
-`2fa -list` lists the names of all the keys in the keychain.
+# Copy 2fa-keys.txt to the new machine (scp, usb, whatever)
 
-`2fa name` prints a two-factor authentication code from the key with the
-given name. If `-clip` is specified, `2fa` also copies to the code to the system
-clipboard.
+# On the new machine:
+2fa import < 2fa-keys.txt
+```
 
-With no arguments, `2fa` prints two-factor authentication codes from all
-known time-based keys.
+This works regardless of whether the keychain is encrypted — `export` always
+outputs decrypted plaintext, and `import` will re-encrypt if `2FA_PASS` is set
+on the new machine.
 
-The default time-based authentication codes are derived from a hash of the
-key and the current time, so it is important that the system clock have at
-least one-minute accuracy.
+You can also just copy the raw file directly:
 
-The keychain is stored unencrypted in the text file `$HOME/.2fa`.
+```bash
+scp old-machine:~/.2fa new-machine:~/.2fa
+```
 
-## Example
+But `export`/`import` is safer when encryption is involved — it handles
+decrypting on the source and re-encrypting on the destination.
 
-During GitHub 2FA setup, at the “Scan this barcode with your app” step,
-click the “enter this text code instead” link. A window pops up showing
-“your two-factor secret,” a short string of letters and digits.
+---
 
-Add it to 2fa under the name github, typing the secret at the prompt:
+## Quick start
 
-    $ 2fa -add github
-    2fa key for github: nzxxiidbebvwk6jb
-    $
+```
+# Install
+go install github.com/pharrisee/2fa@latest
 
-Then whenever GitHub prompts for a 2FA code, run 2fa to obtain one:
+# Or from source:
+#   git clone https://github.com/pharrisee/2fa
+#   cd 2fa
+#   ./install.sh
 
-    $ 2fa github
-    268346
-    $
+# Add a key
+2fa add github
+2fa key for github: nzxxiidbebvwk6jb
 
-Or to type less:
+# Get a code (auto-clipboard)
+2fa github
+760414
 
-    $ 2fa
-    268346	github
-    $
+# Interactive menu (default)
+2fa
+
+# See all codes at once
+2fa all
+```
+
+---
+
+## Usage
+
+| Command | What it does |
+|---------|-------------|
+| `2fa` | Interactive menu (default) with live countdown |
+| `2fa <name>` | Print + copy a code (case-insensitive) |
+| `2fa add [--hotp] [--7|--8] <name>` | Add a new key |
+| `2fa add <otpauth://URI>` | Import a key from an otpauth:// URI |
+| `2fa delete <name>` | Delete a key |
+| `2fa rename <old> <new>` | Rename a key |
+| `2fa list` | List all stored key names |
+| `2fa all` | Print codes for all time-based keys |
+| `2fa export` | Print decrypted keychain to stdout |
+| `2fa import` | Read keychain from stdin and write to file |
+| `2fa validate` | Check keychain file integrity |
+| `2fa version` | Print version |
+
+### Adding a key
+
+`2fa add <name>` prompts on stderr for the secret, reads it from stdin.
+Secrets are short case-insensitive strings of letters A–Z and digits 2–7
+(the standard base32 encoding used by Google Authenticator and friends).
+
+You can also pass an `otpauth://` URI (the standard export format used by
+Google Authenticator, Authy, etc.) directly as the argument — the secret,
+name, type (TOTP/HOTP), and digit count are extracted automatically. No
+stdin prompt needed:
+
+```bash
+2fa add "otpauth://totp/GitHub:phil@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub"
+```
+
+**Flags:**
+| Flag | Effect |
+|------|--------|
+| *(none)* | TOTP (time-based), 6 digits |
+| `-hotp` | HOTP (counter-based) instead of TOTP |
+| `-7` | 7-digit codes |
+| `-8` | 8-digit codes |
+
+Flags are ignored when importing an `otpauth://` URI (the URI specifies
+everything).
+
+### Deleting / renaming keys
+
+```bash
+2fa delete github          # remove a key
+2fa rename github gh        # rename a key
+```
+
+Both operations use case-insensitive lookup (same as `2fa <name>`).
+
+### Validating the keychain
+
+```bash
+2fa validate
+```
+
+Parses every line in the keychain and reports:
+- Missing or extra fields
+- Invalid digit counts (must be 6, 7, or 8)
+- Invalid base32 secrets
+- Bad HOTP counter fields (wrong width or non-numeric)
+- Duplicate key names
+
+### Getting a code
+
+**`2fa name`** — finds the key (case-insensitive), generates the code,
+copies it to the clipboard, and prints it. The clipboard is automatically
+cleared after 30 seconds.
+
+**`2fa`** (no args) — opens an interactive TUI with a highlighted list.
+Arrow keys move the highlight, typing filters the list, Enter selects.
+The code is copied to clipboard and auto-cleared.
+
+Each entry shows a live countdown (`[12s]`) for TOTP keys, updated every
+second. HOTP keys display `[HOTP]` instead.
+
+**`2fa all`** (no args) — prints codes for all time-based keys side-by-side.
+
+**Case-insensitive lookup** — `2fa gitlab` matches `Gitlab`, `GITHUB`
+matches `GitHub`. If two keys differ only by case, it'll tell you.
+
+---
+
+## Keychain file
+
+The keychain lives at `$HOME/.2fa` (override with `$2FA_FILE`).
+
+### Plaintext format (default)
+
+Each line: `name digits base32secret [counter]`
+
+```
+github 6 NZXXIIDBEBVWK6JB
+gitlab 6 QWER234ASDF5678
+slack 8 ZXCV9876BNML4321  00000000000000000000
+```
+
+The optional `counter` field (20 zero-padded digits) marks a key as HOTP.
+
+### Encrypted format
+
+Set the environment variable `2FA_PASS` to enable AES-256-GCM encryption
+with Argon2id key derivation:
+
+```bash
+export 2FA_PASS="your-secret-passphrase"
+2fa add myservice     # file is encrypted on write
+```
+
+Encrypted files are prefixed with `2FA!v1\n` followed by base64-encoded
+`salt || nonce || ciphertext`. Unencrypted files (no header) remain fully
+backward compatible.
+
+If the file is encrypted but `2FA_PASS` is unset, 2fa errors out with a
+helpful message. If the file is plaintext and `2FA_PASS` is set, it's
+upgraded to encrypted on the next write.
+
+---
+
+## Architecture
+
+```
+                   ┌─────────────┐
+                   │   ~/.2fa    │
+                   │ (plain/enc) │
+                   └──────┬──────┘
+                          │ os.ReadFile / atomic write
+                   ┌──────┴──────┐
+                   │  Keychain   │
+                   │  (parsed)   │
+                   └──────┬──────┘
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+         ┌────┴────┐ ┌───┴───┐ ┌────┴────┐
+         │ TOTP    │ │ HOTP  │ │ Menu    │
+         │ (hotp)  │ │(hotp) │ │(bubble- │
+         │ +drift  │ │+incr  │ │ tea TUI)│
+         │ toler.  │ │counter│ │         │
+         └─────────┘ └───────┘ └─────────┘
+              │           │           │
+              └───────────┴───────────┘
+                          │
+                   ┌──────┴──────┐
+                   │  clipboard  │
+                   │  (30s auto  │
+                   │   clear)    │
+                   └─────────────┘
+```
+
+- **TOTP**: RFC 6238 — HMAC-SHA1, 30s time step, dynamic truncation, ±1 window tolerance
+- **HOTP**: RFC 4226 — HMAC-SHA1, counter persisted in-file, auto-incremented on use
+- **Encryption**: AES-256-GCM + Argon2id (time=3, mem=64MB, threads=4)
+- **Clipboard**: cross-platform via `atotto/clipboard`, auto-cleared after 30s
+- **TUI**: custom `bubbletea` model with real-time filtering, no external widget deps
+
+---
 
 ## Fish integration
 
-Install [Gum](https://github.com/charmbracelet/gum) for menu creation.
+Add to `~/.config/fish/functions/mfa.fish`:
 
-Add this function to `~/.config/fish/functions/mfa.fish`:
-
-```
-function mfa --wraps=2fa\ -clip\ \(cut\ -f\ 1\ -d\ \'\ \'\ \<\ \~/.2fa\ \|\ gum\ choose\) --description alias\ mfa=2fa\ -clip\ \(cut\ -f\ 1\ -d\ \'\ \'\ \<\ \~/.2fa\ \|\ gum\ choose\)
-  2fa -clip (cut -f 1 -d ' ' < ~/.2fa | gum choose) $argv;
+```fish
+function mfa
+  2fa $argv
 end
 ```
 
-Call it by typing `mfa` in the terminal and a menu appears. Selecting one of the options will copy the code into the clipboard.
+Type `mfa` for the interactive picker. If the built-in clipboard doesn't
+work on your system (e.g., WSL without xclip/xsel), pipe to `clip.exe`:
+
+```fish
+function mfa
+  2fa $argv | clip.exe
+end
+```
+
+---
+
+## Example: full GitHub 2FA flow
+
+1. Go to GitHub Settings → Password and authentication →
+   **Enable two-factor authentication**
+2. At "Scan this barcode with your app", click
+   **"enter this text code instead"**
+3. Copy the secret and add it:
+
+```
+$ 2fa add github
+2fa key for github: nzxxiidbebvwk6jb
+$
+```
+
+4. Whenever prompted, get a code:
+
+```
+$ 2fa github
+268346
+```
+
+That's it. The code is in your clipboard and on your screen.
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/pharrisee/2fa
+cd 2fa
+./install.sh              # build + install to ~/.local/bin
+go vet ./...
+```
+
+Single package, no complex build system. The only external dependencies are:
+
+| Dependency | Purpose |
+|-----------|---------|
+| `atotto/clipboard` | Cross-platform clipboard |
+| `charmbracelet/bubbletea` | TUI framework for `menu` |
+| `golang.org/x/crypto/argon2` | Key derivation for encrypted keychain |
+
+---
+
+## Notes
+
+- TOTP codes are derived from a hash of the key and the current time (30s window
+  with ±1 tolerance). System clock should be accurate within ~90 seconds.
+- The keychain file has no built-in locking — concurrent writes from multiple
+  invocations could corrupt it (rare in practice).
+- HOTP keys are excluded from `2fa` (all) since generating a code consumes
+  the counter. Use `2fa <name>` or the menu for HOTP keys.
