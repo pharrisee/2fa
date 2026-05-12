@@ -103,7 +103,6 @@ func main() {
 	log.SetFlags(0)
 	flag.Usage = usage
 	flag.Parse()
-
 	k := readKeychain(filepath.Join(os.Getenv("HOME"), ".2fa"))
 
 	if *flagList {
