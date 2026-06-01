@@ -20,10 +20,12 @@ persistent memory system. It tells AI agents how to work on this project.
 Every session, read these files first:
 
 1. `README.md` — full docs, commands, architecture
-2. `main.go` — the entire program (~560 lines, single package)
-3. `go.mod` — dependencies
+2. `main.go` — entry point (~5 lines)
+3. `internal/app/` — all implementation
+4. `go.mod` — dependencies
 
-The entire program is one file (`main.go`). Tests live in `main_test.go`
+The implementation is in `internal/app/` (`package app`). The root `main.go`
+is a thin wrapper that calls `app.Run()`. Tests live in `internal/app/app_test.go`
 (41 tests covering TOTP/HOTP RFC vectors, parsing, encryption round-trip,
 case-insensitive lookup, file I/O, and export).
 
@@ -35,8 +37,8 @@ GoReleaser config in `.goreleaser.yaml`.
 
 ## Key Principles
 
-1. **Minimalism.** Everything fits in one file. Adding a dependency requires
-   strong justification. Prefer stdlib over external packages.
+1. **Minimalism.** Minimal dependencies, clear file boundaries. Prefer stdlib over
+   external packages. The implementation is split across focused files in `internal/app/`.
 
 2. **Backward compatibility.** The `~/.2fa` file format must never break.
    Encrypted files use a magic header; unencrypted files have none.
@@ -56,8 +58,8 @@ GoReleaser config in `.goreleaser.yaml`.
 
 ## Code Conventions
 
-- Single `package main`, single `main.go`
-- No test files (none exist, don't create them unless asked)
+- Root `main.go` is a thin entry point; all logic in `internal/app/` (`package app`)
+- No test files in root (tests in `internal/app/app_test.go`)
 - Error messages prefixed with `"2fa: "` via `log.SetPrefix`
 - `log.Fatal` for unrecoverable errors (CLI tool, no daemon)
 - Tabs for indentation (standard Go)

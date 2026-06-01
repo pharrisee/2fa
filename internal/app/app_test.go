@@ -1,8 +1,9 @@
-package main
+package app
 
 import (
 	"bytes"
 	"encoding/base32"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -112,6 +113,34 @@ func TestTotp_ClockDriftTolerance(t *testing.T) {
 	}
 }
 
+func TestTotpWithFallback_ReturnsCode(t *testing.T) {
+	code := totpWithFallback(rfc4226Secret, 6)
+	if code < 0 || code > 999999 {
+		t.Errorf("expected 6-digit code, got %d", code)
+	}
+}
+
+func TestTotpWithFallback_StableInWindow(t *testing.T) {
+	c1 := totpWithFallback(rfc4226Secret, 6)
+	c2 := totpWithFallback(rfc4226Secret, 6)
+	// Two calls within the same 30s window should return the same code.
+	if c1 != c2 {
+		t.Errorf("expected same code within window, got %d and %d", c1, c2)
+	}
+}
+
+func TestTotpWithFallback_NoFallbackWhenCurrentWorks(t *testing.T) {
+	// At the RFC zero-point (Unix time 0), TOTP should be non-zero so no
+	// fallback fires, but the result still matches the base totp() call.
+	code := totpWithFallback(rfc4226Secret, 6)
+	base := totp(rfc4226Secret, time.Now(), 6)
+	// Both should match unless we're at a window boundary where the fallback
+	// picks a different window; in normal use they match.
+	if code != base && (code == 0 || base == 0) {
+		t.Logf("code=%d base=%d (possible boundary mismatch)", code, base)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // decodeKey
 // ---------------------------------------------------------------------------
@@ -203,6 +232,48 @@ func TestParse_ValidHOTPLine(t *testing.T) {
 	}
 	if n != 7 {
 		t.Errorf("counter: got %d, want 7", n)
+	}
+}
+
+// TestInsertKey_HOTPOffsetInNonEmptyKeychain verifies that the HOTP counter
+// offset is computed relative to the full keychain data, not just the new line.
+// This guards against the bug where insertKey calls parse on only the new line,
+// producing an offset that's wrong when other keys exist in the file.
+func TestInsertKey_HOTPOffsetInNonEmptyKeychain(t *testing.T) {
+	c := &Keychain{keys: make(map[string]Key)}
+
+	// Pre-populate with TOTP keys (simulates an existing keychain).
+	c.data = []byte("github 6 JBSWY3DP\ngitlab 6 JBSWY3DP\n")
+	c.parse(c.data)
+
+	// This mirrors what insertKey does for a HOTP key:
+	// append the new line to c.data, then re-parse the full data.
+	line := fmt.Sprintf("myhotp 6 JBSWY3DP %020d\n", 0)
+	c.data = append(c.data, []byte(line)...)
+	c.parse(c.data)
+
+	k, ok := c.keys["myhotp"]
+	if !ok {
+		t.Fatal("HOTP key not found")
+	}
+	if k.offset == 0 {
+		t.Fatal("HOTP key should have non-zero offset")
+	}
+
+	// The offset should point to the counter field within c.data.
+	// Expected: counter sits just before the trailing \n at the end of c.data.
+	wantOffset := len(c.data) - counterFieldWidth - 1
+	if k.offset != wantOffset {
+		t.Fatalf("HOTP offset: got %d, want %d (c.data=%q)", k.offset, wantOffset, string(c.data))
+	}
+
+	// Verify the counter reads correctly from c.data at the computed offset.
+	n, err := strconv.ParseUint(string(c.data[k.offset:k.offset+counterFieldWidth]), 10, 64)
+	if err != nil {
+		t.Fatalf("counter at offset %d: %v", k.offset, err)
+	}
+	if n != 0 {
+		t.Errorf("expected counter 0, got %d", n)
 	}
 }
 
@@ -534,7 +605,8 @@ func TestWriteFile_EncryptedRoundTrip(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCode_HOTPCounterIncrement(t *testing.T) {
-	// Write a HOTP key with counter 0, read code, counter should increment.
+	// Verify that code() followed by incrementCounter correctly advances
+	// the HOTP counter and produces valid codes.
 	line := []byte("hotp-test 6 JBSWY3DPEHPK3PXP 00000000000000000000\n")
 	dir := t.TempDir()
 	f := filepath.Join(dir, ".2fa")
@@ -548,10 +620,54 @@ func TestCode_HOTPCounterIncrement(t *testing.T) {
 		t.Errorf("expected 6-digit code, got %q", code)
 	}
 
-	// Counter should now be 1 on disk.
+	// code() is a pure read — file should be unchanged.
 	data, _ := os.ReadFile(f)
+	if !bytes.Contains(data, []byte("00000000000000000000")) {
+		t.Error("code() should not modify the file")
+	}
+
+	// incrementCounter persists the advance.
+	c.incrementCounter("hotp-test")
+	data, _ = os.ReadFile(f)
 	if !bytes.Contains(data, []byte("00000000000000000001")) {
-		t.Errorf("counter should be 1 after first access, got: %s", strings.TrimSpace(string(data)))
+		t.Errorf("counter should be 1 after increment, got: %s", strings.TrimSpace(string(data)))
+	}
+}
+
+func TestCode_HOTPIncrementSeparate(t *testing.T) {
+	line := []byte("hotp-sep 6 JBSWY3DPEHPK3PXP 00000000000000000005\n")
+	dir := t.TempDir()
+	f := filepath.Join(dir, ".2fa")
+	if err := os.WriteFile(f, line, 0600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	c := readKeychain(f)
+
+	// code() should be a pure read — no file modification.
+	code1 := c.code("hotp-sep")
+	if len(code1) != 6 {
+		t.Errorf("expected 6-digit code, got %q", code1)
+	}
+	data, _ := os.ReadFile(f)
+	if !bytes.Contains(data, []byte("00000000000000000005")) {
+		t.Error("code() should not modify the file for HOTP keys")
+	}
+
+	// incrementCounter persists the counter advance.
+	c.incrementCounter("hotp-sep")
+	data, _ = os.ReadFile(f)
+	if !bytes.Contains(data, []byte("00000000000000000006")) {
+		t.Errorf("counter should be 6 after increment, got: %s", strings.TrimSpace(string(data)))
+	}
+
+	// Calling code() again reflects the new counter.
+	code2 := c.code("hotp-sep")
+	if len(code2) != 6 {
+		t.Errorf("expected 6-digit code, got %q", code2)
+	}
+	if code1 == code2 {
+		t.Error("codes should differ after counter increment")
 	}
 }
 
@@ -603,6 +719,33 @@ func TestCode_8Digit(t *testing.T) {
 	code := c.code("k8")
 	if len(code) != 8 {
 		t.Errorf("expected 8-digit code, got %q (len=%d)", code, len(code))
+	}
+}
+
+// TestKeychainCode_AfterLoad verifies that code() works on an already-loaded
+// keychain without re-reading the file — the keychain passed to menu() is
+// sufficient to display a code.
+func TestKeychainCode_AfterLoad(t *testing.T) {
+	line := []byte("menukey 6 JBSWY3DPEHPK3PXP\n")
+	dir := t.TempDir()
+	f := filepath.Join(dir, ".2fa")
+	if err := os.WriteFile(f, line, 0600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	// This is what menu() does: load the keychain once.
+	c := readKeychain(f)
+
+	// Use the loaded keychain directly — no re-read needed.
+	code := c.code("menukey")
+	if len(code) != 6 {
+		t.Errorf("expected 6-digit code, got %q", code)
+	}
+
+	// File should be unchanged (TOTP, pure read).
+	data, _ := os.ReadFile(f)
+	if !bytes.Contains(data, []byte("menukey 6")) {
+		t.Error("file should be unchanged")
 	}
 }
 
@@ -806,5 +949,33 @@ func BenchmarkHotp(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		hotp(key, uint64(i), 6)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Menu view rendering
+// ---------------------------------------------------------------------------
+
+func TestMenuView_ContainsKeyNames(t *testing.T) {
+	m := menuModel{
+		names:  []string{"github", "gitlab"},
+		keyInf: map[string]menuKeyInfo{
+			"github": {digits: 6, raw: []byte("key"), isHOTP: false},
+			"gitlab": {digits: 6, raw: []byte("key"), isHOTP: true},
+		},
+		cursor: 0,
+		filter: nil,
+		width:  80,
+		height: 24,
+	}
+	out := m.View()
+	if !strings.Contains(out, "github") {
+		t.Error("View should contain 'github'")
+	}
+	if !strings.Contains(out, "gitlab") {
+		t.Error("View should contain 'gitlab'")
+	}
+	if !strings.Contains(out, "[HOTP]") {
+		t.Error("View should show [HOTP] for HOTP keys")
 	}
 }

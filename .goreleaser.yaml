@@ -20,7 +20,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X main.version={{ .Version }}
+      - -s -w -X github.com/pharrisee/2fa/internal/app.Version={{ .Version }}
 
 archives:
   - id: default
