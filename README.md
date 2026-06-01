@@ -72,7 +72,7 @@ go install github.com/pharrisee/2fa@latest
 |---------|-------------|
 | `2fa` | Interactive menu (default) with live countdown |
 | `2fa <name>` | Print + copy a code (case-insensitive) |
-| `2fa add [--hotp] [--7|--8] <name>` | Add a new key |
+| `2fa add [--hotp] [--7¦--8] <name>` | Add a new key |
 | `2fa add <otpauth://URI>` | Import a key from an otpauth:// URI |
 | `2fa delete <name>` | Delete a key |
 | `2fa rename <old> <new>` | Rename a key |
