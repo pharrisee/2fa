@@ -30,6 +30,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,7 +56,21 @@ const (
 )
 
 // Version set by linker at build time (goreleaser: -X main.version={{ .Version }}).
+// Falls back to runtime/debug build info when unset.
 var version = "dev"
+
+func appVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		v := info.Main.Version
+		if v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return "dev"
+}
 
 // Cached encryption key derived from 2FA_PASS (set once).
 var cachedKey []byte
@@ -214,7 +229,7 @@ func main() {
 				Name:  "version",
 				Usage: "print version",
 				Action: func(c *cli.Context) error {
-					fmt.Printf("2fa %s\n", version)
+					fmt.Printf("2fa %s\n", appVersion())
 					return nil
 				},
 			},
