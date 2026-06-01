@@ -1010,6 +1010,8 @@ func deriveKey(passphrase string, salt []byte) []byte {
 }
 
 func encryptData(plaintext []byte, passphrase string) ([]byte, error) {
+	// Clear cached key since encryption uses a fresh salt each time.
+	cachedKey = nil
 	salt := make([]byte, saltLen)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		return nil, err

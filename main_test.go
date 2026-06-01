@@ -372,6 +372,45 @@ func TestDecrypt_NoMagicHeader(t *testing.T) {
 	}
 }
 
+func TestEncryptCachedKeyReset(t *testing.T) {
+	cachedKey = nil
+	plaintext := []byte("test 6 JBSWY3DP\n")
+	pass := "test-pass"
+
+	encrypted1, err := encryptData(plaintext, pass)
+	if err != nil {
+		t.Fatalf("encryptData: %v", err)
+	}
+
+	decrypted, err := decryptData(encrypted1, pass)
+	if err != nil {
+		t.Fatalf("decryptData: %v", err)
+	}
+	if !bytes.Equal(decrypted, plaintext) {
+		t.Errorf("decrypt round-trip failed")
+	}
+
+	// Encrypt again without resetting cachedKey - should still work
+	encrypted2, err := encryptData(plaintext, pass)
+	if err != nil {
+		t.Fatalf("encryptData second time: %v", err)
+	}
+
+	// Verify second encryption produces different output (fresh salt)
+	if bytes.Equal(encrypted1, encrypted2) {
+		t.Error("two encryptions should produce different ciphertext")
+	}
+
+	// Verify second encryption can be decrypted
+	decrypted2, err := decryptData(encrypted2, pass)
+	if err != nil {
+		t.Fatalf("decryptData second encrypt: %v", err)
+	}
+	if !bytes.Equal(decrypted2, plaintext) {
+		t.Errorf("second decrypt round-trip failed")
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Keychain read/write with temp files
 // ---------------------------------------------------------------------------
