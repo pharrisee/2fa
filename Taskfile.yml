@@ -11,16 +11,16 @@ tasks:
   build:
     desc: Build the binary
     cmds:
-      - go build -o 2fa .
+      - go build -o bin/2fa .
 
   install:
     desc: Build and install to ~/.local/bin
     deps:
       - build
     cmds:
-      - cp 2fa ~/.local/bin/2fa
+      - cp bin/2fa ~/.local/bin/2fa
     sources:
-      - 2fa
+      - bin/2fa
 
   test:
     desc: Run all tests
@@ -31,7 +31,7 @@ tasks:
   clean:
     desc: Remove built binary
     cmds:
-      - rm -f 2fa
+      - rm -f bin/2fa
 
   tidy:
     desc: Tidy module dependencies
@@ -42,3 +42,10 @@ tasks:
     desc: Dry-run goreleaser
     cmds:
       - goreleaser release --clean --snapshot --skip=publish
+
+  # detailed func coverage report
+  coverage:
+    desc: Generate a detailed function coverage report
+    cmds:
+      - go test -coverprofile=/tmp/coverage.out ./...
+      - go tool cover -func=/tmp/coverage.out
