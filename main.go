@@ -577,7 +577,6 @@ func (c *Keychain) show(name string) {
 	if err := writeClipboard(code); err != nil {
 		log.Printf("warning: clipboard copy failed: %v", err)
 	}
-	clearClipboardAfter(30 * time.Second)
 	fmt.Printf("%s\n", code)
 }
 
@@ -984,7 +983,6 @@ func showWithClip(name string) {
 	if err := writeClipboard(code); err != nil {
 		log.Printf("warning: clipboard copy failed: %v", err)
 	}
-	clearClipboardAfter(30 * time.Second)
 	fmt.Printf("%s\n", code)
 }
 
@@ -1097,18 +1095,6 @@ func decryptData(raw []byte, passphrase string) ([]byte, error) {
 		return nil, fmt.Errorf("decryption failed (wrong passphrase?): %v", err)
 	}
 	return plaintext, nil
-}
-
-// ---------------------------------------------------------------------------
-// Clipboard auto-clear
-// ---------------------------------------------------------------------------
-
-func clearClipboardAfter(d time.Duration) {
-	time.AfterFunc(d, func() {
-		if err := writeClipboard(""); err != nil {
-			log.Printf("warning: could not clear clipboard: %v", err)
-		}
-	})
 }
 
 func writeClipboard(s string) error {

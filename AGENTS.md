@@ -43,7 +43,7 @@ GoReleaser config in `.goreleaser.yaml`.
    Both must parse correctly forever.
 
 3. **Clipboard is the default.** `2fa <name>` always copies to clipboard —
-   no `-clip` flag needed. The 30s clear timer is essential (security).
+   no `-clip` flag needed.
 
 4. **Case-insensitive lookup.** Key names are case-insensitive on lookup
    (`2fa github` matches `GitHub`). If two keys differ only by case,

@@ -139,12 +139,11 @@ Parses every line in the keychain and reports:
 ### Getting a code
 
 **`2fa name`** — finds the key (case-insensitive), generates the code,
-copies it to the clipboard, and prints it. The clipboard is automatically
-cleared after 30 seconds.
+copies it to the clipboard, and prints it.
 
 **`2fa`** (no args) — opens an interactive TUI with a highlighted list.
 Arrow keys move the highlight, typing filters the list, Enter selects.
-The code is copied to clipboard and auto-cleared.
+The code is copied to clipboard.
 
 Each entry shows a live countdown (`[12s]`) for TOTP keys, updated every
 second. HOTP keys display `[HOTP]` instead.
@@ -201,7 +200,7 @@ graph TD
     Keychain --> TOTP["TOTP\ndrift tolerance"]
     Keychain --> HOTP["HOTP\nincr counter"]
     Keychain --> Menu["Menu\nbubbletea TUI"]
-    TOTP --> Clipboard["clipboard\n30s auto clear"]
+    TOTP --> Clipboard["clipboard"]
     HOTP --> Clipboard
     Menu --> Clipboard
 
@@ -212,7 +211,7 @@ graph TD
 - **TOTP**: RFC 6238 — HMAC-SHA1, 30s time step, dynamic truncation, ±1 window tolerance
 - **HOTP**: RFC 4226 — HMAC-SHA1, counter persisted in-file, auto-incremented on use
 - **Encryption**: AES-256-GCM + Argon2id (time=3, mem=64MB, threads=4)
-- **Clipboard**: cross-platform via `wl-copy`/`xclip`/`xsel` (Linux), `pbcopy` (macOS), or `clip` (Windows), auto-cleared after 30s
+- **Clipboard**: cross-platform via `wl-copy`/`xclip`/`xsel` (Linux), `pbcopy` (macOS), or `clip` (Windows)
 - **TUI**: custom `bubbletea` model with real-time filtering, no external widget deps
 
 ---
