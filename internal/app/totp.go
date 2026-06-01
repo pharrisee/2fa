@@ -38,7 +38,10 @@ func totp(key []byte, t time.Time, digits int) int {
 }
 
 // totpWithFallback computes a TOTP code with ±1 window tolerance.
-// If the current window gives 0, it tries the previous and next windows.
+// If the current window yields a code of 0 (a 1-in-10^digits edge case that
+// can occur when the generated HMAC value happens to land in the zero bucket),
+// it falls back to adjacent time windows to avoid producing a code of all
+// zeros — which some services reject as invalid.
 func totpWithFallback(key []byte, digits int) int {
 	now := time.Now()
 	code := totp(key, now, digits)

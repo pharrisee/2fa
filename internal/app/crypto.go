@@ -18,17 +18,10 @@ import (
 )
 
 func deriveKey(passphrase string, salt []byte) []byte {
-	if cachedKey != nil {
-		return cachedKey
-	}
-	key := argon2.IDKey([]byte(passphrase), salt, argon2Time, argon2Memory, argon2Threads, aesKeyLen)
-	cachedKey = key
-	return key
+	return argon2.IDKey([]byte(passphrase), salt, argon2Time, argon2Memory, argon2Threads, aesKeyLen)
 }
 
 func encryptData(plaintext []byte, passphrase string) ([]byte, error) {
-	// Clear cached key since encryption uses a fresh salt each time.
-	cachedKey = nil
 	salt := make([]byte, saltLen)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		return nil, err

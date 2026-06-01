@@ -49,9 +49,6 @@ func appVersion() string {
 	return "dev"
 }
 
-// Cached encryption key derived from 2FA_PASS (set once).
-var cachedKey []byte
-
 func keychainPath() string {
 	if e := os.Getenv("2FA_FILE"); e != "" {
 		return e
@@ -179,7 +176,7 @@ func Run() {
 						keys: make(map[string]Key),
 					}
 					if pass := os.Getenv("2FA_PASS"); pass != "" {
-						k.encrypted = true
+						k.useEncryption = true
 						k.passphrase = pass
 					}
 					k.data = data

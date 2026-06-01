@@ -23,8 +23,8 @@ type Keychain struct {
 	file       string
 	data       []byte // raw file content (plaintext, after decryption if applicable)
 	keys       map[string]Key
-	encrypted  bool   // whether the file on disk is encrypted
-	passphrase string // cached passphrase, empty = no encryption
+	useEncryption bool   // whether to encrypt on write (set when file is encrypted or 2FA_PASS is set)
+	passphrase    string // cached passphrase, empty = no encryption
 }
 
 // Key represents a single TOTP or HOTP key in the keychain.
@@ -62,7 +62,7 @@ func readKeychain(file string) *Keychain {
 		if pass == "" {
 			log.Fatalf("%s is encrypted but 2FA_PASS environment variable is not set", filepath.Base(file))
 		}
-		c.encrypted = true
+		c.useEncryption = true
 		c.passphrase = pass
 		plaintext, err = decryptData(rawFile, pass)
 		if err != nil {
@@ -71,7 +71,7 @@ func readKeychain(file string) *Keychain {
 	} else {
 		plaintext = rawFile
 		if pass != "" {
-			c.encrypted = true
+			c.useEncryption = true
 			c.passphrase = pass
 		}
 	}
@@ -120,11 +120,17 @@ func (c *Keychain) parse(data []byte) {
 	}
 }
 
+// setData rebuilds the keys map from c.data, handling state reset in one place.
+func (c *Keychain) setData() {
+	c.keys = make(map[string]Key)
+	c.parse(c.data)
+}
+
 // writeFile atomically writes the in-memory keychain data to disk,
 // encrypting if encryption is enabled.
 func (c *Keychain) writeFile() error {
 	data := c.data
-	if c.encrypted {
+	if c.useEncryption {
 		if c.passphrase == "" {
 			return fmt.Errorf("cannot write encrypted keychain: no passphrase")
 		}
@@ -198,7 +204,7 @@ func (c *Keychain) insertKey(name, rawSecret string, size int, hotp bool) {
 	line += "\n"
 
 	c.data = append(c.data, []byte(line)...)
-	c.parse(c.data)
+	c.setData()
 
 	if err := c.writeFile(); err != nil {
 		log.Fatalf("adding key: %v", err)
@@ -274,8 +280,7 @@ func (c *Keychain) incrementCounter(name string) {
 	copy(newData[k.offset:k.offset+counterFieldWidth], newCounter)
 
 	c.data = newData
-	c.keys = make(map[string]Key)
-	c.parse(c.data)
+	c.setData()
 
 	if err := c.writeFile(); err != nil {
 		log.Fatalf("updating keychain: %v", err)
@@ -336,8 +341,7 @@ func (c *Keychain) remove(name string) {
 	}
 
 	c.data = buf.Bytes()
-	c.keys = make(map[string]Key)
-	c.parse(c.data)
+	c.setData()
 	if err := c.writeFile(); err != nil {
 		log.Fatalf("deleting key: %v", err)
 	}
@@ -374,8 +378,7 @@ func (c *Keychain) rename(oldName, newName string) {
 	}
 
 	c.data = buf.Bytes()
-	c.keys = make(map[string]Key)
-	c.parse(c.data)
+	c.setData()
 	if err := c.writeFile(); err != nil {
 		log.Fatalf("renaming key: %v", err)
 	}
