@@ -23,7 +23,7 @@ func decodeKey(key string) ([]byte, error) {
 
 func hotp(key []byte, counter uint64, digits int) int {
 	h := hmac.New(sha1.New, key)
-	binary.Write(h, binary.BigEndian, counter)
+	binary.Write(h, binary.BigEndian, counter) //nolint:errcheck // writing to memory cannot fail
 	sum := h.Sum(nil)
 	v := binary.BigEndian.Uint32(sum[sum[len(sum)-1]&0x0F:]) & 0x7FFFFFFF
 	d := uint32(1)

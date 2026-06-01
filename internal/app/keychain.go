@@ -18,6 +18,7 @@ import (
 	"unicode"
 )
 
+// Keychain represents a parsed 2fa keychain file.
 type Keychain struct {
 	file       string
 	data       []byte // raw file content (plaintext, after decryption if applicable)
@@ -26,6 +27,7 @@ type Keychain struct {
 	passphrase string // cached passphrase, empty = no encryption
 }
 
+// Key represents a single TOTP or HOTP key in the keychain.
 type Key struct {
 	raw    []byte
 	digits int
@@ -138,21 +140,21 @@ func (c *Keychain) writeFile() error {
 		return err
 	}
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmp.Name())
+		tmp.Close()           //nolint:errcheck // best-effort cleanup
+		os.Remove(tmp.Name()) //nolint:errcheck // best-effort cleanup
 		return err
 	}
 	if err := tmp.Chmod(0o600); err != nil {
-		tmp.Close()
-		os.Remove(tmp.Name())
+		tmp.Close()           //nolint:errcheck // best-effort cleanup
+		os.Remove(tmp.Name()) //nolint:errcheck // best-effort cleanup
 		return err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmp.Name())
+		os.Remove(tmp.Name()) //nolint:errcheck // best-effort cleanup
 		return err
 	}
 	if err := os.Rename(tmp.Name(), c.file); err != nil {
-		os.Remove(tmp.Name())
+		os.Remove(tmp.Name()) //nolint:errcheck // best-effort cleanup
 		return err
 	}
 	return nil
@@ -291,11 +293,11 @@ func (c *Keychain) show(name string) {
 
 func (c *Keychain) showAll() {
 	names := c.sortedKeyNames()
-	max := 0
+	maxLen := 0
 	for _, name := range names {
 		k := c.keys[name]
-		if max < k.digits {
-			max = k.digits
+		if maxLen < k.digits {
+			maxLen = k.digits
 		}
 	}
 	for _, name := range names {
@@ -308,7 +310,7 @@ func (c *Keychain) showAll() {
 			// HOTP: cannot show without consuming the counter.
 			code = strings.Repeat("-", k.digits)
 		}
-		fmt.Printf("%-*s\t%s\n", max, code, name)
+		fmt.Printf("%-*s\t%s\n", maxLen, code, name)
 	}
 }
 

@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package app implements the 2fa TOTP/HOTP authenticator CLI.
 package app
 
 import (
@@ -55,7 +56,11 @@ func keychainPath() string {
 	if e := os.Getenv("2FA_FILE"); e != "" {
 		return e
 	}
-	return filepath.Join(os.Getenv("HOME"), ".2fa")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("cannot determine home directory: %v", err)
+	}
+	return filepath.Join(home, ".2fa")
 }
 
 func openKeychain() *Keychain {
@@ -94,7 +99,7 @@ func Run() {
 			{
 				Name:  "list",
 				Usage: "list all key names",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					openKeychain().list()
 					return nil
 				},
@@ -102,7 +107,7 @@ func Run() {
 			{
 				Name:  "all",
 				Usage: "print codes for all time-based keys",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					openKeychain().showAll()
 					return nil
 				},
@@ -152,16 +157,16 @@ func Run() {
 			{
 				Name:  "export",
 				Usage: "export keychain to stdout (decrypted)",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					k := openKeychain()
-					os.Stdout.Write(k.data)
+					os.Stdout.Write(k.data) //nolint:errcheck // best-effort stdout write
 					return nil
 				},
 			},
 			{
 				Name:  "import",
 				Usage: "import keychain from stdin",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					data, err := io.ReadAll(os.Stdin)
 					if err != nil {
 						return cli.Exit(fmt.Sprintf("reading input: %v", err), 1)
@@ -216,7 +221,7 @@ func Run() {
 			{
 				Name:  "validate",
 				Usage: "check keychain file integrity",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					openKeychain().validate()
 					return nil
 				},
@@ -224,7 +229,7 @@ func Run() {
 			{
 				Name:  "version",
 				Usage: "print version",
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					fmt.Printf("2fa %s\n", appVersion())
 					return nil
 				},

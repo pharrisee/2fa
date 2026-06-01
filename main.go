@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command 2fa is a two-factor authentication agent.
 package main
 
 import "github.com/pharrisee/2fa/internal/app"

@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//nolint:errcheck // test helpers don't need error checking
 package app
 
 import (
@@ -72,7 +73,7 @@ func TestHotp_8Digit(t *testing.T) {
 // Secret = "12345678901234567890" → same base32 as above.
 // Time is Unix epoch + specified offset.
 type totpTestCase struct {
-	t    int64  // Unix time
+	t    int64 // Unix time
 	code int
 }
 
@@ -80,7 +81,7 @@ func TestTotp_RFC6238(t *testing.T) {
 	// RFC 6238 Table 1 — TOTP with SHA1, 8 digits, 30s step.
 	cases := []totpTestCase{
 		{59, 94287082},
-		{1111111109, 7081804},  // RFC: 07081804 (leading zero, int is 7081804)
+		{1111111109, 7081804}, // RFC: 07081804 (leading zero, int is 7081804)
 		{1111111111, 14050471},
 		{1234567890, 89005924},
 		{2000000000, 69279037},
@@ -316,7 +317,7 @@ func TestParse_SkipsMalformedLines(t *testing.T) {
 	data := []byte(
 		"valid 6 JBSWY3DPEHPK3PXP\n" +
 			"badline\n" +
-			"also_bad  JBSWY3DPEHPK3PXP\n" +   // missing digit field
+			"also_bad  JBSWY3DPEHPK3PXP\n" + // missing digit field
 			"bad_digit 9 JBSWY3DPEHPK3PXP\n" + // digit '9' out of range 6-8
 			"\n" + // blank line
 			"valid2 7 JBSWY3DPEHPK3PXP\n",
@@ -963,7 +964,7 @@ func BenchmarkHotp(b *testing.B) {
 
 func TestMenuView_ContainsKeyNames(t *testing.T) {
 	m := menuModel{
-		names:  []string{"github", "gitlab"},
+		names: []string{"github", "gitlab"},
 		keyInf: map[string]menuKeyInfo{
 			"github": {digits: 6, raw: []byte("key"), isHOTP: false},
 			"gitlab": {digits: 6, raw: []byte("key"), isHOTP: true},
