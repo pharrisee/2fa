@@ -1,7 +1,6 @@
 # AGENTS.md — Operating Manual
 
-This file is part of the [shared-brain](https://github.com/Jason-Cyr/ai-shared-brain)
-persistent memory system. It tells AI agents how to work on this project.
+This file tells AI agents how to work on this project.
 
 ---
 
