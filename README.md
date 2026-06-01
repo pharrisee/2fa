@@ -7,8 +7,7 @@ A zero-frills TOTP/HOTP authenticator that lives in your terminal. No phone app,
 no browser extension — just a single Go binary and a plaintext (or optionally
 encrypted) keychain file.
 
-Forked from [the Go authors' 2fa](https://github.com/rsc/2fa). 
-
+Forked from [the Go authors' 2fa](https://github.com/rsc/2fa).
 Adds an interactive TUI menu with live countdown, clipboard by default,
 AES-256-GCM encryption, HOTP support, OTP URI import, keychain validation,
 export/import for migration, and cross-platform clipboard (macOS, Windows,
@@ -57,10 +56,6 @@ Then add a key and get a code:
 2fa add github
 2fa key for github: uksroa3fjae252vu
 
-2fa github
-760414
-
-# Get a code (auto-clipboard)
 2fa github
 760414
 
@@ -252,7 +247,7 @@ go build -o ~/.local/bin/2fa .
 go vet ./...
 ```
 
-Single package, no complex build system. The only external dependencies are:
+Simple Go project, no build system. Implementation in `internal/app/`. The only external dependencies are:
 
 | Dependency | Purpose |
 |-----------|---------|
