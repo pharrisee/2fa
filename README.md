@@ -7,7 +7,12 @@ A zero-frills TOTP/HOTP authenticator that lives in your terminal. No phone app,
 no browser extension — just a single Go binary and a plaintext (or optionally
 encrypted) keychain file.
 
-Forked from [the Go authors' 2fa](https://github.com/rsc/tmp2fa).
+Forked from [the Go authors' 2fa](https://github.com/rsc/2fa). 
+
+Adds an interactive TUI menu with live countdown, clipboard by default with auto-clear,
+AES-256-GCM encryption, HOTP support, OTP URI import, keychain validation,
+export/import for migration, and cross-platform clipboard (macOS, Windows,
+Linux).
 
 ---
 
@@ -189,33 +194,19 @@ upgraded to encrypted on the next write.
 
 ## Architecture
 
-```
-                   ┌─────────────┐
-                   │   ~/.2fa    │
-                   │ (plain/enc) │
-                   └──────┬──────┘
-                          │ os.ReadFile / atomic write
-                   ┌──────┴──────┐
-                   │  Keychain   │
-                   │  (parsed)   │
-                   └──────┬──────┘
-                          │
-              ┌───────────┼───────────┐
-              │           │           │
-         ┌────┴────┐ ┌───┴───┐ ┌────┴────┐
-         │ TOTP    │ │ HOTP  │ │ Menu    │
-         │ (hotp)  │ │(hotp) │ │(bubble- │
-         │ +drift  │ │+incr  │ │ tea TUI)│
-         │ toler.  │ │counter│ │         │
-         └─────────┘ └───────┘ └─────────┘
-              │           │           │
-              └───────────┴───────────┘
-                          │
-                   ┌──────┴──────┐
-                   │  clipboard  │
-                   │  (30s auto  │
-                   │   clear)    │
-                   └─────────────┘
+```mermaid
+graph TD
+    File(("~/.2fa"))
+    File -->|read / write| Keychain["Keychain (parsed)"]
+    Keychain --> TOTP["TOTP\ndrift tolerance"]
+    Keychain --> HOTP["HOTP\nincr counter"]
+    Keychain --> Menu["Menu\nbubbletea TUI"]
+    TOTP --> Clipboard["clipboard\n30s auto clear"]
+    HOTP --> Clipboard
+    Menu --> Clipboard
+
+    style File fill:#f9f9f9,stroke:#333
+    style Clipboard fill:#e3f2fd,stroke:#1565c0
 ```
 
 - **TOTP**: RFC 6238 — HMAC-SHA1, 30s time step, dynamic truncation, ±1 window tolerance
