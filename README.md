@@ -15,33 +15,6 @@ Linux).
 
 ---
 
-## Migrating to a new machine
-
-```bash
-# On the old machine:
-2fa export > 2fa-keys.txt
-
-# Copy 2fa-keys.txt to the new machine (scp, usb, whatever)
-
-# On the new machine:
-2fa import < 2fa-keys.txt
-```
-
-This works regardless of whether the keychain is encrypted — `export` always
-outputs decrypted plaintext, and `import` will re-encrypt if `2FA_PASS` is set
-on the new machine.
-
-You can also just copy the raw file directly:
-
-```bash
-scp old-machine:~/.2fa new-machine:~/.2fa
-```
-
-But `export`/`import` is safer when encryption is involved — it handles
-decrypting on the source and re-encrypting on the destination.
-
----
-
 ## Quick start
 
 Download the latest release from [the Releases page](https://github.com/pharrisee/2fa/releases) (Linux, macOS, Windows — tarball or zip), or with Go installed:
@@ -235,6 +208,33 @@ $ 2fa github
 ```
 
 That's it. The code is in your clipboard and on your screen.
+
+---
+
+## Migrating to a new machine
+
+```bash
+# On the old machine:
+2fa export > 2fa-keys.txt
+
+# Copy 2fa-keys.txt to the new machine (scp, usb, whatever)
+
+# On the new machine:
+2fa import < 2fa-keys.txt
+```
+
+This works regardless of whether the keychain is encrypted — `export` always
+outputs decrypted plaintext, and `import` will re-encrypt if `2FA_PASS` is set
+on the new machine.
+
+You can also just copy the raw file directly:
+
+```bash
+scp old-machine:~/.2fa new-machine:~/.2fa
+```
+
+But `export`/`import` is safer when encryption is involved — it handles
+decrypting on the source and re-encrypting on the destination.
 
 ---
 
