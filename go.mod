@@ -3,7 +3,6 @@ module github.com/pharrisee/2fa
 go 1.26.3
 
 require (
-	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/urfave/cli/v2 v2.27.7

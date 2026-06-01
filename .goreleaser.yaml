@@ -30,7 +30,6 @@ archives:
     files:
       - README.md
       - LICENSE
-      - mfa.fish
 
 checksum:
   name_template: "checksums.txt"

@@ -22,14 +22,12 @@ Every session, read these files first:
 1. `README.md` — full docs, commands, architecture
 2. `main.go` — the entire program (~560 lines, single package)
 3. `go.mod` — dependencies
-4. `mfa.fish` — Fish shell wrapper (thin)
 
 The entire program is one file (`main.go`). Tests live in `main_test.go`
 (41 tests covering TOTP/HOTP RFC vectors, parsing, encryption round-trip,
 case-insensitive lookup, file I/O, and export).
 
-Build and install: `./install.sh` (builds to `~/.local/bin/2fa`, also copies
-`mfa.fish` to fish functions directory if available).
+Build and install: `./install.sh` (builds to `~/.local/bin/2fa`).
 CI/CD in `.github/workflows/ci.yml` and `.github/workflows/release.yml`.
 GoReleaser config in `.goreleaser.yaml`.
 

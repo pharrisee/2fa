@@ -226,27 +226,6 @@ upgraded to encrypted on the next write.
 
 ---
 
-## Fish integration
-
-Add to `~/.config/fish/functions/mfa.fish`:
-
-```fish
-function mfa
-  2fa $argv
-end
-```
-
-Type `mfa` for the interactive picker. If the built-in clipboard doesn't
-work on your system (e.g., WSL without xclip/xsel), pipe to `clip.exe`:
-
-```fish
-function mfa
-  2fa $argv | clip.exe
-end
-```
-
----
-
 ## Example: full GitHub 2FA flow
 
 1. Go to GitHub Settings → Password and authentication →

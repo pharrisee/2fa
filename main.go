@@ -27,14 +27,15 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/urfave/cli/v2"
@@ -558,7 +559,7 @@ func (c *Keychain) code(name string) string {
 
 func (c *Keychain) show(name string) {
 	code := c.code(name)
-	if err := clipboard.WriteAll(code); err != nil {
+	if err := writeClipboard(code); err != nil {
 		log.Printf("warning: clipboard copy failed: %v", err)
 	}
 	clearClipboardAfter(30 * time.Second)
@@ -965,7 +966,7 @@ func (c *Keychain) menu() {
 func showWithClip(name string) {
 	k := openKeychain()
 	code := k.code(name)
-	if err := clipboard.WriteAll(code); err != nil {
+	if err := writeClipboard(code); err != nil {
 		log.Printf("warning: clipboard copy failed: %v", err)
 	}
 	clearClipboardAfter(30 * time.Second)
@@ -1089,8 +1090,36 @@ func decryptData(raw []byte, passphrase string) ([]byte, error) {
 
 func clearClipboardAfter(d time.Duration) {
 	time.AfterFunc(d, func() {
-		if err := clipboard.WriteAll(""); err != nil {
+		if err := writeClipboard(""); err != nil {
 			log.Printf("warning: could not clear clipboard: %v", err)
 		}
 	})
+}
+
+func writeClipboard(s string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("pbcopy")
+	case "windows":
+		cmd = exec.Command("clip")
+	default:
+		switch {
+		case findExe("wl-copy"):
+			cmd = exec.Command("wl-copy")
+		case findExe("xclip"):
+			cmd = exec.Command("xclip", "-selection", "clipboard")
+		case findExe("xsel"):
+			cmd = exec.Command("xsel", "-ib")
+		default:
+			return fmt.Errorf("no clipboard tool found (install wl-copy, xclip, or xsel)")
+		}
+	}
+	cmd.Stdin = strings.NewReader(s)
+	return cmd.Run()
+}
+
+func findExe(name string) bool {
+	_, err := exec.LookPath(name)
+	return err == nil
 }
