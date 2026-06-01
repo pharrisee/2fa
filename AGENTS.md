@@ -26,8 +26,11 @@ Every session, read these files first:
 
 The implementation is in `internal/app/` (`package app`). The root `main.go`
 is a thin wrapper that calls `app.Run()`. Tests live in `internal/app/app_test.go`
-(41 tests covering TOTP/HOTP RFC vectors, parsing, encryption round-trip,
-case-insensitive lookup, file I/O, and export).
+(50 tests covering TOTP/HOTP RFC vectors, parsing, encryption round-trip,
+case-insensitive lookup, file I/O, and export, CLI integration).
+
+Common tasks are defined in `Taskfile.yml` — run `task` for the default
+pipeline (lint → test → build), or `task <name>` for individual steps.
 
 Build and install: `go build -o ~/.local/bin/2fa .`.
 CI/CD in `.github/workflows/ci.yml` and `.github/workflows/release.yml`.

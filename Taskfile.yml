@@ -1,0 +1,50 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Build, lint, and test
+    cmds:
+      - task: tidy
+      - task: lint
+      - task: test
+      - task: build
+
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o 2fa .
+
+  install:
+    desc: Build and install to ~/.local/bin
+    deps:
+      - build
+    cmds:
+      - cp 2fa ~/.local/bin/2fa
+    sources:
+      - 2fa
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go vet ./...
+      - go test -count=1 ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  clean:
+    desc: Remove built binary
+    cmds:
+      - rm -f 2fa
+
+  tidy:
+    desc: Tidy module dependencies
+    cmds:
+      - go mod tidy
+
+  release-dry:
+    desc: Dry-run goreleaser
+    cmds:
+      - goreleaser release --clean --snapshot --skip=publish

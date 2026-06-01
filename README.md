@@ -1,7 +1,8 @@
 # 2fa — Two-Factor Auth Agent
 
-<a href="#"><img src="https://img.shields.io/badge/go-1.26-blue"></a>
+|<a href="#"><img src="https://img.shields.io/badge/go-1.26-blue"></a>
 <a href="#"><img src="https://img.shields.io/badge/license-BSD--3--Clause-green"></a>
+<a href="#"><img src="https://img.shields.io/badge/lint-golangci--lint-brightgreen"></a>
 
 A zero-frills TOTP/HOTP authenticator that lives in your terminal. No phone app,
 no browser extension — just a single Go binary and a plaintext (or optionally
@@ -245,6 +246,7 @@ git clone https://github.com/pharrisee/2fa
 cd 2fa
 go build -o ~/.local/bin/2fa .
 go vet ./...
+golangci-lint run ./...
 ```
 
 Simple Go project, no build system. Implementation in `internal/app/`. The only external dependencies are:
