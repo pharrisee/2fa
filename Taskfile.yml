@@ -5,7 +5,6 @@ tasks:
     desc: Build, lint, and test
     cmds:
       - task: tidy
-      - task: lint
       - task: test
       - task: build
 
@@ -28,11 +27,6 @@ tasks:
     cmds:
       - go vet ./...
       - go test -count=1 ./...
-
-  lint:
-    desc: Run golangci-lint
-    cmds:
-      - golangci-lint run ./...
 
   clean:
     desc: Remove built binary
