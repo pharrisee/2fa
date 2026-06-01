@@ -164,9 +164,9 @@ The keychain lives at `$HOME/.2fa` (override with `$2FA_FILE`).
 Each line: `name digits base32secret [counter]`
 
 ```
-github 6 NZXXIIDBEBVWK6JB
-gitlab 6 QWER234ASDF5678
-slack 8 ZXCV9876BNML4321  00000000000000000000
+github 6 EXOL2RVI5NHZN4P3
+gitlab 6 M454VBSCIRHXLZZH
+slack 8 CPJCTJNNHACYIPWT  00000000000000000000
 ```
 
 The optional `counter` field (20 zero-padded digits) marks a key as HOTP.
