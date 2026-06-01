@@ -45,18 +45,20 @@ decrypting on the source and re-encrypting on the destination.
 
 ## Quick start
 
+Download the latest release from [the Releases page](https://github.com/pharrisee/2fa/releases) (Linux, macOS, Windows — tarball or zip), or with Go installed:
+
 ```
-# Install
 go install github.com/pharrisee/2fa@latest
+```
 
-# Or from source:
-#   git clone https://github.com/pharrisee/2fa
-#   cd 2fa
-#   ./install.sh
+Then add a key and get a code:
 
-# Add a key
+```
 2fa add github
-2fa key for github: nzxxiidbebvwk6jb
+2fa key for github: uksroa3fjae252vu
+
+2fa github
+760414
 
 # Get a code (auto-clipboard)
 2fa github
@@ -246,7 +248,7 @@ That's it. The code is in your clipboard and on your screen.
 ```bash
 git clone https://github.com/pharrisee/2fa
 cd 2fa
-./install.sh              # build + install to ~/.local/bin
+go build -o ~/.local/bin/2fa .
 go vet ./...
 ```
 

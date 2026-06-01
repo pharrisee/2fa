@@ -27,7 +27,7 @@ The entire program is one file (`main.go`). Tests live in `main_test.go`
 (41 tests covering TOTP/HOTP RFC vectors, parsing, encryption round-trip,
 case-insensitive lookup, file I/O, and export).
 
-Build and install: `./install.sh` (builds to `~/.local/bin/2fa`).
+Build and install: `go build -o ~/.local/bin/2fa .`.
 CI/CD in `.github/workflows/ci.yml` and `.github/workflows/release.yml`.
 GoReleaser config in `.goreleaser.yaml`.
 
