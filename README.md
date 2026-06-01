@@ -9,7 +9,7 @@ encrypted) keychain file.
 
 Forked from [the Go authors' 2fa](https://github.com/rsc/2fa). 
 
-Adds an interactive TUI menu with live countdown, clipboard by default with auto-clear,
+Adds an interactive TUI menu with live countdown, clipboard by default,
 AES-256-GCM encryption, HOTP support, OTP URI import, keychain validation,
 export/import for migration, and cross-platform clipboard (macOS, Windows,
 Linux).

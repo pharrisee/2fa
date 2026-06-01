@@ -49,8 +49,8 @@ GoReleaser config in `.goreleaser.yaml`.
    (`2fa github` matches `GitHub`). If two keys differ only by case,
    error with an unambiguous message.
 
-5. **Security defaults.** File permission warnings, encrypted storage opt-in,
-   clipboard auto-clear — all default-on protections.
+5. **Security defaults.** File permission warnings, encrypted storage opt-in —
+   all default-on protections.
 
 ---
 
