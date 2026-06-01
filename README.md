@@ -221,7 +221,7 @@ upgraded to encrypted on the next write.
 - **TOTP**: RFC 6238 — HMAC-SHA1, 30s time step, dynamic truncation, ±1 window tolerance
 - **HOTP**: RFC 4226 — HMAC-SHA1, counter persisted in-file, auto-incremented on use
 - **Encryption**: AES-256-GCM + Argon2id (time=3, mem=64MB, threads=4)
-- **Clipboard**: cross-platform via `atotto/clipboard`, auto-cleared after 30s
+- **Clipboard**: cross-platform via `wl-copy`/`xclip`/`xsel` (Linux), `pbcopy` (macOS), or `clip` (Windows), auto-cleared after 30s
 - **TUI**: custom `bubbletea` model with real-time filtering, no external widget deps
 
 ---
@@ -264,7 +264,6 @@ Single package, no complex build system. The only external dependencies are:
 
 | Dependency | Purpose |
 |-----------|---------|
-| `atotto/clipboard` | Cross-platform clipboard |
 | `charmbracelet/bubbletea` | TUI framework for `menu` |
 | `golang.org/x/crypto/argon2` | Key derivation for encrypted keychain |
 
