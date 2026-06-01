@@ -1,6 +1,6 @@
 module github.com/pharrisee/2fa
 
-go 1.26.3
+go 1.25.0
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.6

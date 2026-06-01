@@ -1,6 +1,6 @@
 # 2fa — Two-Factor Auth Agent
 
-|<a href="#"><img src="https://img.shields.io/badge/go-1.26-blue"></a>
+|<a href="#"><img src="https://img.shields.io/badge/go-1.24-blue"></a>
 <a href="#"><img src="https://img.shields.io/badge/license-BSD--3--Clause-green"></a>
 <a href="#"><img src="https://img.shields.io/badge/lint-golangci--lint-brightgreen"></a>
 

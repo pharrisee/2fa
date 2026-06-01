@@ -10,7 +10,7 @@ persistent memory system. It tells AI agents how to work on this project.
 - **Name:** 2fa
 - **Role:** Zero-frills TOTP/HOTP authenticator — a single Go binary
 - **Repository:** `github.com/pharrisee/2fa`
-- **Language:** Go 1.26.3
+- **Language:** Go 1.24.0
 - **Keychain file:** `~/.2fa` (plaintext by default, AES-256-GCM with `2FA_PASS`)
 
 ---
